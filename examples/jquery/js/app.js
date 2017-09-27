@@ -60,7 +60,7 @@ jQuery(function ($) {
 				.on('change', '.toggle', this.toggle.bind(this))
 				.on('dblclick', 'label', this.edit.bind(this))
 				.on('keyup', '.edit', this.editKeyup.bind(this))
-				.on('focusout', '.edit', this.update.bind(this))
+				.on('focusout', '.edit', this.updateTodo.bind(this))
 				.on('click', '.destroy', this.destroy.bind(this));
 		},
 		save: function() {
@@ -86,6 +86,11 @@ jQuery(function ($) {
 
 			$('#footer').toggle(todoCount > 0).html(template);
 		},
+		update: function() {
+			this.save();
+			this.render();
+			this.renderFooter();
+		},
 		toggleAll: function (e) {
 			var isChecked = $(e.target).prop('checked');
 
@@ -93,8 +98,7 @@ jQuery(function ($) {
 				todo.completed = isChecked;
 			});
 
-			this.save();
-			this.render();
+			this.update();
 		},
 		getActiveTodos: function () {
 			return this.todos.filter(function (todo) {
@@ -121,8 +125,7 @@ jQuery(function ($) {
 			this.todos = this.getActiveTodos();
 			this.filter = 'all';
 
-			this.save();
-			this.render();
+			this.update();
 		},
 		// accepts an element from inside the `.item` div and
 		// returns the corresponding index in the `todos` array
@@ -153,15 +156,13 @@ jQuery(function ($) {
 
 			$input.val('');
 
-			this.save();
-			this.render();
+			this.update();
 		},
 		toggle: function (e) {
 			var i = this.indexFromEl(e.target);
 			this.todos[i].completed = !this.todos[i].completed;
 
-			this.save();
-			this.render();
+			this.update();
 		},
 		edit: function (e) {
 			var $input = $(e.target).closest('li').addClass('editing').find('.edit');
@@ -176,7 +177,7 @@ jQuery(function ($) {
 				$(e.target).data('abort', true).blur();
 			}
 		},
-		update: function (e) {
+		updateTodo: function (e) {
 			var el = e.target;
 			var $el = $(el);
 			var val = $el.val().trim();
@@ -192,14 +193,12 @@ jQuery(function ($) {
 				this.todos[this.indexFromEl(el)].title = val;
 			}
 
-			this.save();
-			this.render();
+			this.update();
 		},
 		destroy: function (e) {
 			this.todos.splice(this.indexFromEl(e.target), 1);
 
-			this.save();
-			this.render();
+			this.update();
 		}
 	};
 
