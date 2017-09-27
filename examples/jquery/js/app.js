@@ -8,6 +8,7 @@ jQuery(function ($) {
 
 	var ENTER_KEY = 13;
 	var ESCAPE_KEY = 27;
+	var STORAGE_STRING = 'todos-jquery';
 
 	var util = {
 		uuid: function () {
@@ -28,19 +29,18 @@ jQuery(function ($) {
 		pluralize: function (count, word) {
 			return count === 1 ? word : word + 's';
 		},
-		store: function (namespace, data) {
-			if (arguments.length > 1) {
-				return localStorage.setItem(namespace, JSON.stringify(data));
-			} else {
-				var store = localStorage.getItem(namespace);
-				return (store && JSON.parse(store)) || [];
-			}
+		fetch: function () {
+			var store = localStorage.getItem(STORAGE_STRING);
+			return (store && JSON.parse(store)) || [];
+		},
+		store: function (data) {
+			return localStorage.setItem(STORAGE_STRING, JSON.stringify(data));
 		}
 	};
 
 	var App = {
 		init: function () {
-			this.todos = util.store('todos-jquery');
+			this.todos = util.fetch();
 			this.todoTemplate = Handlebars.compile($('#todo-template').html());
 			this.footerTemplate = Handlebars.compile($('#footer-template').html());
 			this.bindEvents();
@@ -63,6 +63,9 @@ jQuery(function ($) {
 				.on('focusout', '.edit', this.update.bind(this))
 				.on('click', '.destroy', this.destroy.bind(this));
 		},
+		save: function() {
+			util.store(this.todos);
+		},
 		render: function () {
 			var todos = this.getFilteredTodos();
 			$('#todo-list').html(this.todoTemplate(todos));
@@ -70,7 +73,6 @@ jQuery(function ($) {
 			$('#toggle-all').prop('checked', this.getActiveTodos().length === 0);
 			this.renderFooter();
 			$('#new-todo').focus();
-			util.store('todos-jquery', this.todos);
 		},
 		renderFooter: function () {
 			var todoCount = this.todos.length;
@@ -91,6 +93,7 @@ jQuery(function ($) {
 				todo.completed = isChecked;
 			});
 
+			this.save();
 			this.render();
 		},
 		getActiveTodos: function () {
@@ -117,6 +120,8 @@ jQuery(function ($) {
 		destroyCompleted: function () {
 			this.todos = this.getActiveTodos();
 			this.filter = 'all';
+
+			this.save();
 			this.render();
 		},
 		// accepts an element from inside the `.item` div and
@@ -148,11 +153,14 @@ jQuery(function ($) {
 
 			$input.val('');
 
+			this.save();
 			this.render();
 		},
 		toggle: function (e) {
 			var i = this.indexFromEl(e.target);
 			this.todos[i].completed = !this.todos[i].completed;
+
+			this.save();
 			this.render();
 		},
 		edit: function (e) {
@@ -184,10 +192,13 @@ jQuery(function ($) {
 				this.todos[this.indexFromEl(el)].title = val;
 			}
 
+			this.save();
 			this.render();
 		},
 		destroy: function (e) {
 			this.todos.splice(this.indexFromEl(e.target), 1);
+
+			this.save();
 			this.render();
 		}
 	};
